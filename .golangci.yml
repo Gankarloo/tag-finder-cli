@@ -1,0 +1,29 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go: "1.24"
+
+linters:
+  enable:
+    # Default linters
+    - errcheck      # Check for unchecked errors
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis (includes gosimple in v2)
+    - unused        # Check for unused code
+
+    # Additional useful linters
+    - misspell      # Finds commonly misspelled English words
+    - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Find unused function parameters
+    - bodyclose     # Check whether HTTP response body is closed
+    - goconst       # Find repeated strings that could be constants
+    - noctx         # Find sending http request without context.Context
+    - rowserrcheck  # Check whether Err of rows is checked
+
+formatters:
+  enable:
+    - gofmt         # Check whether code was gofmt-ed
+    - goimports     # Check import statements are formatted

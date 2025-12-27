@@ -1,3 +1,4 @@
+// Package main provides a terminal UI tool for finding Docker image tags by digest.
 package main
 
 import (
@@ -51,7 +52,6 @@ type model struct {
 	cancel       context.CancelFunc
 }
 
-type tickMsg struct{}
 type tagsMsg struct {
 	tags []string
 	err  error
@@ -69,12 +69,12 @@ var (
 )
 
 // parseImageReference parses an image reference and returns the registry URL and repository path
-func parseImageReference(image string) (registryURL, repository string, err error) {
+func parseImageReference(image string) (registryURL, repository string) {
 	parts := strings.SplitN(image, "/", 2)
 
 	if len(parts) == 1 {
 		// No registry specified, default to docker.io
-		return "https://registry-1.docker.io", "library/" + parts[0], nil
+		return "https://registry-1.docker.io", "library/" + parts[0]
 	}
 
 	registry := parts[0]
@@ -86,14 +86,14 @@ func parseImageReference(image string) (registryURL, repository string, err erro
 		if !strings.Contains(repo, "/") {
 			repo = "library/" + repo
 		}
-		return "https://registry-1.docker.io", repo, nil
+		return "https://registry-1.docker.io", repo
 	case "ghcr.io":
-		return "https://ghcr.io", repo, nil
+		return "https://ghcr.io", repo
 	case "quay.io":
-		return "https://quay.io", repo, nil
+		return "https://quay.io", repo
 	default:
 		// Generic registry
-		return "https://" + registry, repo, nil
+		return "https://" + registry, repo
 	}
 }
 
@@ -156,11 +156,15 @@ func (rc *RegistryClient) getBearerToken(authHeader, repository string) (string,
 	}
 
 	// Request token
-	resp, err := rc.httpClient.Get(tokenURL)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", tokenURL, nil)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	resp, err := rc.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("token request failed with status %d", resp.StatusCode)
@@ -213,7 +217,7 @@ func parseLinkHeader(linkHeader string) string {
 
 // fetchTagsPage fetches a single page of tags and returns the next URL if available
 func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, string, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -229,7 +233,7 @@ func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, strin
 	if err != nil {
 		return nil, "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Handle 401 by getting bearer token
 	if resp.StatusCode == http.StatusUnauthorized {
@@ -244,7 +248,7 @@ func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, strin
 		}
 
 		// Retry with token
-		req, err = http.NewRequest("GET", url, nil)
+		req, err = http.NewRequestWithContext(context.Background(), "GET", url, nil)
 		if err != nil {
 			return nil, "", err
 		}
@@ -254,7 +258,7 @@ func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, strin
 		if err != nil {
 			return nil, "", err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -308,7 +312,7 @@ func (rc *RegistryClient) fetchTagsList(registryURL, repository string) ([]strin
 func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag string) (string, error) {
 	url := fmt.Sprintf("%s/v2/%s/manifests/%s", registryURL, repository, tag)
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
 	if err != nil {
 		return "", err
 	}
@@ -332,7 +336,7 @@ func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag strin
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Handle 401 by getting bearer token
 	if resp.StatusCode == http.StatusUnauthorized {
@@ -347,7 +351,7 @@ func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag strin
 		}
 
 		// Retry with token
-		req, err = http.NewRequest("GET", url, nil)
+		req, err = http.NewRequestWithContext(context.Background(), "GET", url, nil)
 		if err != nil {
 			return "", err
 		}
@@ -363,7 +367,7 @@ func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag strin
 		if err != nil {
 			return "", err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -438,10 +442,7 @@ func (rc *RegistryClient) FetchDigests(ctx context.Context, registryURL, reposit
 
 func fetchTags(image string, workers int) tea.Cmd {
 	return func() tea.Msg {
-		registryURL, repository, err := parseImageReference(image)
-		if err != nil {
-			return tagsMsg{err: err}
-		}
+		registryURL, repository := parseImageReference(image)
 
 		client := NewRegistryClient(workers)
 		tags, err := client.fetchTagsList(registryURL, repository)
@@ -453,12 +454,9 @@ func fetchTags(image string, workers int) tea.Cmd {
 	}
 }
 
-func startWorkerPool(image string, tags []string, workers int, ctx context.Context, resultsChan chan TagInfo) tea.Cmd {
+func startWorkerPool(ctx context.Context, image string, tags []string, workers int, resultsChan chan TagInfo) tea.Cmd {
 	return func() tea.Msg {
-		registryURL, repository, err := parseImageReference(image)
-		if err != nil {
-			return checkMsg{err: err}
-		}
+		registryURL, repository := parseImageReference(image)
 
 		client := NewRegistryClient(workers)
 
@@ -501,7 +499,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			resultsChan := make(chan TagInfo, m.workers*2)
 			m.resultsChan = resultsChan
 			return m, tea.Batch(
-				startWorkerPool(m.image, m.tags, m.workers, m.ctx, resultsChan),
+				startWorkerPool(m.ctx, m.image, m.tags, m.workers, resultsChan),
 			)
 		}
 		m.done = true
@@ -563,19 +561,19 @@ func (m model) View() string {
 	}
 
 	percent := float64(m.current) / float64(m.total)
-	
+
 	var s strings.Builder
 	s.WriteString(fmt.Sprintf("%s Checking tags for digest match...\n\n", m.spinner.View()))
 	s.WriteString(fmt.Sprintf("Progress: %d/%d tags\n", m.current, m.total))
 	s.WriteString(m.progress.ViewAs(percent))
 	s.WriteString("\n\n")
-	
+
 	if len(m.matchingTags) > 0 {
 		s.WriteString(successStyle.Render(fmt.Sprintf("Matches found so far: %d\n", len(m.matchingTags))))
 	}
-	
+
 	s.WriteString(infoStyle.Render("\nPress q or ctrl+c to quit"))
-	
+
 	return s.String()
 }
 
