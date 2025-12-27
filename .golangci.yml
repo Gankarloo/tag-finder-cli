@@ -20,7 +20,6 @@ linters:
     - unconvert     # Remove unnecessary type conversions
     - unparam       # Find unused function parameters
     - bodyclose     # Check whether HTTP response body is closed
-    - exportloopref # Check for pointers to enclosing loop variables
     - goconst       # Find repeated strings that could be constants
     - noctx         # Find sending http request without context.Context
     - rowserrcheck  # Check whether Err of rows is checked
