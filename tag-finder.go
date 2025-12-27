@@ -614,7 +614,7 @@ func main() {
 		digest = "sha256:" + digest
 	}
 
-	p := tea.NewProgram(initialModel(image, digest, *workers), tea.WithInput(nil))
+	p := tea.NewProgram(initialModel(image, digest, *workers))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
