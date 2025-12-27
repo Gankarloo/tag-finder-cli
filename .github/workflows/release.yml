@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          initial_version: 0.1.0
+          tag_prefix: v
+          create_annotated_tag: true
+
+      - name: Build cross-platform binaries
+        if: steps.tag_version.outputs.new_tag
+        run: |
+          # Define platforms
+          platforms=(
+            "linux:amd64:linux-amd64:"
+            "linux:arm64:linux-arm64:"
+            "windows:amd64:windows-amd64:.exe"
+            "darwin:amd64:darwin-amd64:"
+            "darwin:arm64:darwin-arm64:"
+          )
+
+          VERSION=${{ steps.tag_version.outputs.new_tag }}
+
+          for platform in "${platforms[@]}"; do
+            IFS=':' read -r goos goarch platform_name ext <<< "$platform"
+
+            echo "Building for $goos/$goarch..."
+
+            GOOS=$goos GOARCH=$goarch CGO_ENABLED=0 \
+              go build -o tag-finder${ext} \
+              -ldflags="-s -w -X main.version=${VERSION}" \
+              tag-finder.go
+
+            # Package the binary
+            if [ "$goos" = "windows" ]; then
+              zip tag-finder-${VERSION}-${platform_name}.zip tag-finder${ext}
+            else
+              tar czf tag-finder-${VERSION}-${platform_name}.tar.gz tag-finder
+            fi
+
+            # Clean up binary
+            rm tag-finder${ext}
+          done
+
+      - name: Generate checksums
+        if: steps.tag_version.outputs.new_tag
+        run: |
+          sha256sum tag-finder-* > checksums.txt
+
+      - name: Create GitHub Release
+        if: steps.tag_version.outputs.new_tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          generate_release_notes: true
+          files: |
+            tag-finder-*.tar.gz
+            tag-finder-*.zip
+            checksums.txt
