@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/Gankarloo/skopeo-tag-finder/workflows/CI/badge.svg)](https://github.com/Gankarloo/skopeo-tag-finder/actions/workflows/ci.yml)
 [![Release](https://github.com/Gankarloo/skopeo-tag-finder/workflows/Release/badge.svg)](https://github.com/Gankarloo/skopeo-tag-finder/releases/latest)
+[![codecov](https://codecov.io/gh/Gankarloo/skopeo-tag-finder/branch/main/graph/badge.svg)](https://codecov.io/gh/Gankarloo/skopeo-tag-finder)
 
 A fast terminal UI tool that finds which tags are associated with a specific Docker image digest using the Docker Registry API v2.
 
