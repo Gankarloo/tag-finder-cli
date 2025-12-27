@@ -154,7 +154,7 @@ func TestGetBearerToken(t *testing.T) {
 			t.Errorf("expected scope=repository:library/nginx:pull, got %s", scope)
 		}
 
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"token": "test-token-123",
 		})
 	}))
@@ -183,9 +183,9 @@ func TestGetBearerToken(t *testing.T) {
 
 // Test getBearerToken with access_token response field
 func TestGetBearerToken_AccessToken(t *testing.T) {
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		// Return access_token instead of token
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"access_token": "access-token-456",
 		})
 	}))
@@ -215,8 +215,8 @@ func TestFetchTagsPage(t *testing.T) {
 		{
 			name: "successful fetch without pagination",
 			setupServer: func() *httptest.Server {
-				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					json.NewEncoder(w).Encode(map[string][]string{
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					_ = json.NewEncoder(w).Encode(map[string][]string{
 						"tags": {"latest", "v1.0", "v2.0"},
 					})
 				}))
@@ -228,9 +228,9 @@ func TestFetchTagsPage(t *testing.T) {
 		{
 			name: "fetch with Link header for next page",
 			setupServer: func() *httptest.Server {
-				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.Header().Set("Link", `</v2/repo/tags/list?n=100&last=v2.0>; rel="next"`)
-					json.NewEncoder(w).Encode(map[string][]string{
+					_ = json.NewEncoder(w).Encode(map[string][]string{
 						"tags": {"latest", "v1.0", "v2.0"},
 					})
 				}))
@@ -277,8 +277,8 @@ func TestFetchTagsPage(t *testing.T) {
 // Test fetchTagsPage with 401 authentication retry
 func TestFetchTagsPage_AuthRetry(t *testing.T) {
 	// Setup token server
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"token": "auth-token-xyz",
 		})
 	}))
@@ -301,7 +301,7 @@ func TestFetchTagsPage_AuthRetry(t *testing.T) {
 		if authHeader != "Bearer auth-token-xyz" {
 			t.Errorf("Expected Bearer auth-token-xyz, got %s", authHeader)
 		}
-		json.NewEncoder(w).Encode(map[string][]string{
+		_ = json.NewEncoder(w).Encode(map[string][]string{
 			"tags": {"tag1", "tag2"},
 		})
 	}))
@@ -325,24 +325,24 @@ func TestFetchTagsPage_AuthRetry(t *testing.T) {
 func TestFetchTagsList(t *testing.T) {
 	callCount := 0
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		callCount++
 
 		switch callCount {
 		case 1:
 			// Use relative path like real Docker Registry API
 			w.Header().Set("Link", `</v2/repo/tags/list?n=100&last=tag100>; rel="next"`)
-			json.NewEncoder(w).Encode(map[string][]string{
+			_ = json.NewEncoder(w).Encode(map[string][]string{
 				"tags": createTestTags(100),
 			})
 		case 2:
 			w.Header().Set("Link", `</v2/repo/tags/list?n=100&last=tag200>; rel="next"`)
-			json.NewEncoder(w).Encode(map[string][]string{
+			_ = json.NewEncoder(w).Encode(map[string][]string{
 				"tags": createTestTags(100),
 			})
 		case 3:
 			// Last page - no Link header
-			json.NewEncoder(w).Encode(map[string][]string{
+			_ = json.NewEncoder(w).Encode(map[string][]string{
 				"tags": createTestTags(50),
 			})
 		}
@@ -392,8 +392,8 @@ func TestFetchManifestDigest(t *testing.T) {
 // Test fetchManifestDigest with 401 authentication retry
 func TestFetchManifestDigest_AuthRetry(t *testing.T) {
 	// Setup token server
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"token": "manifest-token",
 		})
 	}))
@@ -507,7 +507,7 @@ func TestFetchDigests(t *testing.T) {
 // Test FetchDigests with context cancellation
 func TestFetchDigests_Cancellation(t *testing.T) {
 	// Mock slow server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(1 * time.Second) // Simulate slow response
 		w.Header().Set("Docker-Content-Digest", "sha256:test")
 		w.WriteHeader(http.StatusOK)

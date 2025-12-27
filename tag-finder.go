@@ -164,7 +164,7 @@ func (rc *RegistryClient) getBearerToken(authHeader, repository string) (string,
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("token request failed with status %d", resp.StatusCode)
@@ -233,7 +233,7 @@ func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, strin
 	if err != nil {
 		return nil, "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Handle 401 by getting bearer token
 	if resp.StatusCode == http.StatusUnauthorized {
@@ -258,7 +258,7 @@ func (rc *RegistryClient) fetchTagsPage(url, repository string) ([]string, strin
 		if err != nil {
 			return nil, "", err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -336,7 +336,7 @@ func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag strin
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Handle 401 by getting bearer token
 	if resp.StatusCode == http.StatusUnauthorized {
@@ -367,7 +367,7 @@ func (rc *RegistryClient) fetchManifestDigest(registryURL, repository, tag strin
 		if err != nil {
 			return "", err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 	}
 
 	if resp.StatusCode != http.StatusOK {
