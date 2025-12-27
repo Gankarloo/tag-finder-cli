@@ -1,16 +1,16 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
-  go: '1.24'
+  go: "1.24"
 
 linters:
   enable:
-    # Default linters (work in both v1 and v2)
+    # Default linters
     - errcheck      # Check for unchecked errors
     - govet         # Vet examines Go source code
     - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Go static analysis
+    - staticcheck   # Go static analysis (includes gosimple in v2)
     - unused        # Check for unused code
 
     # Additional useful linters
@@ -27,73 +27,3 @@ formatters:
   enable:
     - gofmt         # Check whether code was gofmt-ed
     - goimports     # Check import statements are formatted
-
-# Note: gosimple is part of staticcheck in v2, separate in v1
-# gofmt and goimports are formatters in v2, linters in v1
-
-linters-settings:
-  errcheck:
-    check-blank: true
-    check-type-assertions: false
-
-  govet:
-    enable:
-      - assign
-      - atomic
-      - bools
-      - buildtag
-      - cgocall
-      - composites
-      - copylocks
-      - errorsas
-      - httpresponse
-      - ifaceassert
-      - loopclosure
-      - lostcancel
-      - nilfunc
-      - printf
-      - shift
-      - stdmethods
-      - structtag
-      - tests
-      - unmarshal
-      - unreachable
-      - unsafeptr
-      - unusedresult
-    disable:
-      - shadow
-
-  revive:
-    severity: warning
-    confidence: 0.8
-    rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-      - name: increment-decrement
-      - name: var-naming
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: indent-error-flow
-      - name: superfluous-else
-      - name: unreachable-code
-
-issues:
-  # Maximum issues count per one linter
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text
-  max-same-issues: 0
-
-  # Exclude some linters from running on tests files
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - goconst
-        - revive
