@@ -1,7 +1,7 @@
 # Docker Tag Finder
 
-[![CI](https://github.com/USERNAME/skopeo-tag-finder/workflows/CI/badge.svg)](https://github.com/USERNAME/skopeo-tag-finder/actions/workflows/ci.yml)
-[![Release](https://github.com/USERNAME/skopeo-tag-finder/workflows/Release/badge.svg)](https://github.com/USERNAME/skopeo-tag-finder/releases/latest)
+[![CI](https://github.com/Gankarloo/skopeo-tag-finder/workflows/CI/badge.svg)](https://github.com/Gankarloo/skopeo-tag-finder/actions/workflows/ci.yml)
+[![Release](https://github.com/Gankarloo/skopeo-tag-finder/workflows/Release/badge.svg)](https://github.com/Gankarloo/skopeo-tag-finder/releases/latest)
 
 A fast terminal UI tool that finds which tags are associated with a specific Docker image digest using the Docker Registry API v2.
 
@@ -20,29 +20,29 @@ A fast terminal UI tool that finds which tags are associated with a specific Doc
 
 ### Pre-built Binaries (Recommended)
 
-Download the latest release for your platform from the [releases page](https://github.com/USERNAME/skopeo-tag-finder/releases/latest):
+Download the latest release for your platform from the [releases page](https://github.com/Gankarloo/skopeo-tag-finder/releases/latest):
 
 **Linux (amd64):**
 ```bash
-curl -L https://github.com/USERNAME/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-linux-amd64.tar.gz | tar xz
+curl -L https://github.com/Gankarloo/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-linux-amd64.tar.gz | tar xz
 sudo mv tag-finder /usr/local/bin/
 ```
 
 **Linux (arm64):**
 ```bash
-curl -L https://github.com/USERNAME/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-linux-arm64.tar.gz | tar xz
+curl -L https://github.com/Gankarloo/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-linux-arm64.tar.gz | tar xz
 sudo mv tag-finder /usr/local/bin/
 ```
 
 **macOS (Intel):**
 ```bash
-curl -L https://github.com/USERNAME/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-darwin-amd64.tar.gz | tar xz
+curl -L https://github.com/Gankarloo/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-darwin-amd64.tar.gz | tar xz
 sudo mv tag-finder /usr/local/bin/
 ```
 
 **macOS (Apple Silicon):**
 ```bash
-curl -L https://github.com/USERNAME/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-darwin-arm64.tar.gz | tar xz
+curl -L https://github.com/Gankarloo/skopeo-tag-finder/releases/latest/download/tag-finder-VERSION-darwin-arm64.tar.gz | tar xz
 sudo mv tag-finder /usr/local/bin/
 ```
 
@@ -55,7 +55,7 @@ Requirements: Go 1.24 or later
 
 ```bash
 # Clone the repository
-git clone https://github.com/USERNAME/skopeo-tag-finder.git
+git clone https://github.com/Gankarloo/skopeo-tag-finder.git
 cd skopeo-tag-finder
 
 # Download dependencies
