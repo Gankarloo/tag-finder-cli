@@ -29,66 +29,54 @@ func TestParseImageReference(t *testing.T) {
 		input    string
 		wantURL  string
 		wantRepo string
-		wantErr  bool
 	}{
 		{
 			name:     "simple image (no registry)",
 			input:    "nginx",
 			wantURL:  "https://registry-1.docker.io",
 			wantRepo: "library/nginx",
-			wantErr:  false,
 		},
 		{
 			name:     "docker.io with single name",
 			input:    "docker.io/nginx",
 			wantURL:  "https://registry-1.docker.io",
 			wantRepo: "library/nginx",
-			wantErr:  false,
 		},
 		{
 			name:     "docker.io with org/repo",
 			input:    "docker.io/myorg/myrepo",
 			wantURL:  "https://registry-1.docker.io",
 			wantRepo: "myorg/myrepo",
-			wantErr:  false,
 		},
 		{
 			name:     "ghcr.io registry",
 			input:    "ghcr.io/owner/repo",
 			wantURL:  "https://ghcr.io",
 			wantRepo: "owner/repo",
-			wantErr:  false,
 		},
 		{
 			name:     "quay.io registry",
 			input:    "quay.io/org/repo",
 			wantURL:  "https://quay.io",
 			wantRepo: "org/repo",
-			wantErr:  false,
 		},
 		{
 			name:     "custom registry",
 			input:    "registry.example.com/project/image",
 			wantURL:  "https://registry.example.com",
 			wantRepo: "project/image",
-			wantErr:  false,
 		},
 		{
 			name:     "custom registry with port",
 			input:    "localhost:5000/myimage",
 			wantURL:  "https://localhost:5000",
 			wantRepo: "myimage",
-			wantErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotURL, gotRepo, err := parseImageReference(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseImageReference() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			gotURL, gotRepo := parseImageReference(tt.input)
 			if gotURL != tt.wantURL {
 				t.Errorf("parseImageReference() gotURL = %v, want %v", gotURL, tt.wantURL)
 			}

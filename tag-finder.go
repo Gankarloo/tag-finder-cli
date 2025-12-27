@@ -1,3 +1,4 @@
+// Package main provides a terminal UI tool for finding Docker image tags by digest.
 package main
 
 import (
@@ -566,13 +567,13 @@ func (m model) View() string {
 	s.WriteString(fmt.Sprintf("Progress: %d/%d tags\n", m.current, m.total))
 	s.WriteString(m.progress.ViewAs(percent))
 	s.WriteString("\n\n")
-	
+
 	if len(m.matchingTags) > 0 {
 		s.WriteString(successStyle.Render(fmt.Sprintf("Matches found so far: %d\n", len(m.matchingTags))))
 	}
-	
+
 	s.WriteString(infoStyle.Render("\nPress q or ctrl+c to quit"))
-	
+
 	return s.String()
 }
 
