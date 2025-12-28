@@ -34,7 +34,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
-          initial_version: 0.1.0
           tag_prefix: v
           create_annotated_tag: true
 
