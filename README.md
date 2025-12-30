@@ -9,6 +9,7 @@ A fast terminal UI tool that finds which tags are associated with a specific Doc
 ## Features
 
 - 🎨 Beautiful terminal UI with spinner and progress bar
+- 📜 Automatic plain text mode for piping/scripting
 - 📊 Real-time progress tracking
 - ✨ Shows matching tags as they're found
 - 🚀 60x+ faster than CLI tools with concurrent HTTP requests
@@ -80,10 +81,32 @@ tag-finder [flags] <image> <digest>
 ### Flags
 
 - `-workers <N>` - Number of concurrent HTTP requests (default: 10)
+- `-quiet` - Suppress progress messages (plain mode only)
 - `-version` - Print version information
+
+### Output Modes
+
+tag-finder automatically detects the output mode based on your environment:
+
+**Interactive Mode (TTY detected)**
+- Shows full terminal UI with progress bar, spinner, and colors
+- Real-time updates as tags are checked
+- Best for interactive terminal usage
+
+**Plain Mode (piped/redirected output)**
+- Outputs only matching tags to stdout (one per line)
+- Progress messages go to stderr by default
+- Exit code 0 if matches found, 1 if no matches or error
+- Perfect for scripting and automation
+
+The tool automatically switches to plain mode when:
+- Output is piped to another command (e.g., `tag-finder ... | grep latest`)
+- Output is redirected to a file (e.g., `tag-finder ... > tags.txt`)
+- Running in a non-interactive environment (e.g., CI/CD)
 
 ### Examples
 
+**Interactive Mode:**
 ```bash
 # Find tags for a GitHub Container Registry image
 tag-finder ghcr.io/ublue-os/bluefin-dx-nvidia-open sha256:569a4c3f0ef68ae8103e85d3e0a7409f3065895f005ab189f10f57c3cc387a8d
@@ -99,6 +122,34 @@ tag-finder -workers 20 ghcr.io/example/image sha256:abc123...
 
 # Check version
 tag-finder --version
+```
+
+**Plain Mode (Scripting):**
+```bash
+# Save matching tags to a file
+tag-finder nginx sha256:abc123... > matching-tags.txt
+
+# Pipe output to other commands
+tag-finder nginx sha256:abc123... | grep latest
+
+# Assign to a bash variable
+TAGS=$(tag-finder nginx sha256:abc123...)
+
+# Get only the first matching tag
+FIRST_TAG=$(tag-finder nginx sha256:abc123... | head -1)
+
+# Quiet mode - suppress all progress messages
+tag-finder -quiet nginx sha256:abc123... > tags.txt
+
+# Check if any tags match (using exit code)
+if tag-finder -quiet nginx sha256:abc123... > /dev/null; then
+  echo "Tag found!"
+else
+  echo "No matching tags"
+fi
+
+# Count matching tags
+tag-finder -quiet nginx sha256:abc123... | wc -l
 ```
 
 ### Supported Registries
@@ -131,7 +182,9 @@ With the concurrent HTTP request implementation:
 
 ## Output
 
-The program will display:
+### Interactive Mode
+
+When running in a terminal, the program displays:
 - A spinner while working
 - Current progress (X/Y tags checked)
 - A progress bar showing completion percentage
@@ -147,4 +200,23 @@ Found 4 matching tag(s):
   • 41
   • latest
   • stable
+```
+
+### Plain Mode
+
+When output is piped or redirected, the program outputs:
+- **stdout**: Only matching tags, one per line (perfect for piping)
+- **stderr**: Progress messages (unless `-quiet` is used)
+- **Exit code**: 0 if matches found, 1 if no matches or error
+
+Example plain mode output:
+```bash
+$ tag-finder nginx sha256:abc123... 2>/dev/null
+41-20241227
+41
+latest
+stable
+
+$ echo $?
+0
 ```
