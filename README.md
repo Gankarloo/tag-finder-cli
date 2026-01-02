@@ -26,30 +26,30 @@ Download the latest release for your platform from the [releases page](https://g
 
 **Linux (amd64):**
 ```bash
-curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/tag-finder-VERSION-linux-amd64.tar.gz | tar xz
-sudo mv tag-finder /usr/local/bin/
+curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/oci-tag-finder-VERSION-linux-amd64.tar.gz | tar xz
+sudo mv oci-tag-finder /usr/local/bin/
 ```
 
 **Linux (arm64):**
 ```bash
-curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/tag-finder-VERSION-linux-arm64.tar.gz | tar xz
-sudo mv tag-finder /usr/local/bin/
+curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/oci-tag-finder-VERSION-linux-arm64.tar.gz | tar xz
+sudo mv oci-tag-finder /usr/local/bin/
 ```
 
 **macOS (Intel):**
 ```bash
-curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/tag-finder-VERSION-darwin-amd64.tar.gz | tar xz
-sudo mv tag-finder /usr/local/bin/
+curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/oci-tag-finder-VERSION-darwin-amd64.tar.gz | tar xz
+sudo mv oci-tag-finder /usr/local/bin/
 ```
 
 **macOS (Apple Silicon):**
 ```bash
-curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/tag-finder-VERSION-darwin-arm64.tar.gz | tar xz
-sudo mv tag-finder /usr/local/bin/
+curl -L https://github.com/Gankarloo/tag-finder-cli/releases/latest/download/oci-tag-finder-VERSION-darwin-arm64.tar.gz | tar xz
+sudo mv oci-tag-finder /usr/local/bin/
 ```
 
 **Windows:**
-Download the `.zip` file from the releases page and extract `tag-finder.exe` to a directory in your PATH.
+Download the `.zip` file from the releases page and extract `oci-tag-finder.exe` to a directory in your PATH.
 
 ### Build from Source
 
@@ -64,10 +64,10 @@ cd tag-finder-cli
 go mod download
 
 # Build the binary
-go build -o tag-finder tag-finder.go
+go build -o oci-tag-finder oci-tag-finder.go
 
 # Optionally install to /usr/local/bin
-sudo mv tag-finder /usr/local/bin/
+sudo mv oci-tag-finder /usr/local/bin/
 ```
 
 ## Usage
@@ -75,7 +75,7 @@ sudo mv tag-finder /usr/local/bin/
 ### Basic Usage
 
 ```bash
-tag-finder [flags] <image> <digest>
+oci-tag-finder[flags] <image> <digest>
 ```
 
 ### Flags
@@ -86,7 +86,7 @@ tag-finder [flags] <image> <digest>
 
 ### Output Modes
 
-tag-finder automatically detects the output mode based on your environment:
+oci-tag-finderautomatically detects the output mode based on your environment:
 
 **Interactive Mode (TTY detected)**
 - Shows full terminal UI with progress bar, spinner, and colors
@@ -100,8 +100,8 @@ tag-finder automatically detects the output mode based on your environment:
 - Perfect for scripting and automation
 
 The tool automatically switches to plain mode when:
-- Output is piped to another command (e.g., `tag-finder ... | grep latest`)
-- Output is redirected to a file (e.g., `tag-finder ... > tags.txt`)
+- Output is piped to another command (e.g., `oci-tag-finder... | grep latest`)
+- Output is redirected to a file (e.g., `oci-tag-finder... > tags.txt`)
 - Running in a non-interactive environment (e.g., CI/CD)
 
 ### Examples
@@ -109,47 +109,47 @@ The tool automatically switches to plain mode when:
 **Interactive Mode:**
 ```bash
 # Find tags for a GitHub Container Registry image
-tag-finder ghcr.io/ublue-os/bluefin-dx-nvidia-open sha256:569a4c3f0ef68ae8103e85d3e0a7409f3065895f005ab189f10f57c3cc387a8d
+oci-tag-finderghcr.io/ublue-os/bluefin-dx-nvidia-open sha256:569a4c3f0ef68ae8103e85d3e0a7409f3065895f005ab189f10f57c3cc387a8d
 
 # Find tags for an nginx image from Docker Hub
-tag-finder docker.io/library/nginx sha256:abc123def456...
+oci-tag-finderdocker.io/library/nginx sha256:abc123def456...
 
 # Without sha256: prefix (it will be added automatically)
-tag-finder nginx abc123def456...
+oci-tag-findernginx abc123def456...
 
 # Use more workers for faster processing
-tag-finder -workers 20 ghcr.io/example/image sha256:abc123...
+oci-tag-finder-workers 20 ghcr.io/example/image sha256:abc123...
 
 # Check version
-tag-finder --version
+oci-tag-finder--version
 ```
 
 **Plain Mode (Scripting):**
 ```bash
 # Save matching tags to a file
-tag-finder nginx sha256:abc123... > matching-tags.txt
+oci-tag-findernginx sha256:abc123... > matching-tags.txt
 
 # Pipe output to other commands
-tag-finder nginx sha256:abc123... | grep latest
+oci-tag-findernginx sha256:abc123... | grep latest
 
 # Assign to a bash variable
-TAGS=$(tag-finder nginx sha256:abc123...)
+TAGS=$(oci-tag-findernginx sha256:abc123...)
 
 # Get only the first matching tag
-FIRST_TAG=$(tag-finder nginx sha256:abc123... | head -1)
+FIRST_TAG=$(oci-tag-findernginx sha256:abc123... | head -1)
 
 # Quiet mode - suppress all progress messages
-tag-finder -quiet nginx sha256:abc123... > tags.txt
+oci-tag-finder-quiet nginx sha256:abc123... > tags.txt
 
 # Check if any tags match (using exit code)
-if tag-finder -quiet nginx sha256:abc123... > /dev/null; then
+if oci-tag-finder-quiet nginx sha256:abc123... > /dev/null; then
   echo "Tag found!"
 else
   echo "No matching tags"
 fi
 
 # Count matching tags
-tag-finder -quiet nginx sha256:abc123... | wc -l
+oci-tag-finder-quiet nginx sha256:abc123... | wc -l
 ```
 
 ### Supported Registries
@@ -211,7 +211,7 @@ When output is piped or redirected, the program outputs:
 
 Example plain mode output:
 ```bash
-$ tag-finder nginx sha256:abc123... 2>/dev/null
+$ oci-tag-findernginx sha256:abc123... 2>/dev/null
 41-20241227
 41
 latest

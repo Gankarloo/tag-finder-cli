@@ -4,17 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-tag-finder is a fast terminal UI tool written in Go that finds which Docker image tags are associated with a specific digest using the Docker Registry API v2. It uses concurrent HTTP requests and the Bubble Tea framework for an interactive terminal interface.
+oci-tag-finder is a fast terminal UI tool written in Go that finds which Docker image tags are associated with a specific digest using the Docker Registry API v2. It uses concurrent HTTP requests and the Bubble Tea framework for an interactive terminal interface.
 
 ## Build and Test Commands
 
 ### Building
 ```bash
 # Build the binary
-go build -o tag-finder tag-finder.go
+go build -o oci-tag-finder oci-tag-finder.go
 
 # Build with version information (for releases)
-go build -ldflags "-X main.version=v1.0.0" -o tag-finder tag-finder.go
+go build -ldflags "-X main.version=v1.0.0" -o oci-tag-finder oci-tag-finder.go
 ```
 
 ### Testing
@@ -47,25 +47,25 @@ gofmt -l .
 ### Running the Tool
 ```bash
 # Basic usage (interactive mode)
-./tag-finder <image> <digest>
+./oci-tag-finder <image> <digest>
 
 # With custom worker count
-./tag-finder -workers 20 ghcr.io/example/image sha256:abc123...
+./oci-tag-finder -workers 20 ghcr.io/example/image sha256:abc123...
 
 # Plain mode - piped output (automatic TTY detection)
-./tag-finder nginx sha256:abc123... | grep latest
+./oci-tag-finder nginx sha256:abc123... | grep latest
 
 # Plain mode - quiet (suppress stderr progress messages)
-./tag-finder -quiet nginx sha256:abc123... > tags.txt
+./oci-tag-finder -quiet nginx sha256:abc123... > tags.txt
 
 # Check version
-./tag-finder --version
+./oci-tag-finder --version
 ```
 
 ## Code Architecture
 
 ### Single-File Structure
-The entire application is contained in `tag-finder.go` (with tests in `tag-finder_test.go`). This is intentional for simplicity and ease of distribution.
+The entire application is contained in `oci-tag-finder.go` (with tests in `oci-tag-finder_test.go`). This is intentional for simplicity and ease of distribution.
 
 ### Key Components
 
@@ -145,7 +145,7 @@ Note: Docker Hub requires `library/` prefix for official images (e.g., `nginx` â
 - 401 responses trigger automatic token acquisition and retry
 
 ### Testing Patterns
-Tests in `tag-finder_test.go` use:
+Tests in `oci-tag-finder_test.go` use:
 - Table-driven tests for parsing logic
 - Mock HTTP servers for registry API testing
 - Race detector enabled in CI (`-race` flag)
@@ -180,4 +180,4 @@ No external dependencies for Docker Registry API - uses standard library `net/ht
 
 ## Version Information
 
-The `version` variable at the top of `tag-finder.go` is set to "dev" by default and overridden during release builds via `-ldflags "-X main.version=vX.Y.Z"`.
+The `version` variable at the top of `oci-tag-finder.go` is set to "dev" by default and overridden during release builds via `-ldflags "-X main.version=vX.Y.Z"`.

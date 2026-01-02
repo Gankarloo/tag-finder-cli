@@ -33,10 +33,10 @@ jobs:
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Build binary
-        run: go build -o tag-finder tag-finder.go
+        run: go build -o oci-tag-finder oci-tag-finder.go
 
       - name: Verify binary
-        run: ./tag-finder --help || true
+        run: ./oci-tag-finder --help || true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
