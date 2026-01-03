@@ -1,4 +1,4 @@
-module tag-finder
+module oci-tag-finder
 
 go 1.24.0
 

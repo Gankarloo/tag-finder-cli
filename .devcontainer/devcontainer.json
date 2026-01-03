@@ -3,10 +3,25 @@
 {
 	"name": "Go",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/go:2-1.25-trixie"
+	"image": "mcr.microsoft.com/devcontainers/go:2-1.25-trixie",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/node": {
+			"version": "22"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go",
+				"ms-azuretools.vscode-docker",
+				"eamodio.gitlens",
+				"mhutchie.git-graph",
+				"Anthropic.claude-code"
+			]
+		}
+	}
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

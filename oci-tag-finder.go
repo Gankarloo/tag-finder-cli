@@ -8,14 +8,17 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-isatty"
 )
 
 var version = "dev" // Overridden by -ldflags during build
@@ -577,8 +580,101 @@ func (m model) View() string {
 	return s.String()
 }
 
+// checkDigestsPlain processes tags in plain mode, outputting matches to stdout
+func checkDigestsPlain(ctx context.Context, client *RegistryClient, registryURL, repository string, tags []string, targetDigest string, quiet bool) int {
+	resultsChan := make(chan TagInfo, client.workers*2)
+
+	// Start worker pool in background
+	go client.FetchDigests(ctx, registryURL, repository, tags, resultsChan)
+
+	matchCount := 0
+	processed := 0
+	total := len(tags)
+
+	// Poll results as they arrive
+	for result := range resultsChan {
+		processed++
+
+		// Check for match
+		if result.Err == nil && result.Digest == targetDigest {
+			// Write ONLY matching tags to stdout (for piping)
+			fmt.Println(result.Tag)
+			matchCount++
+		}
+
+		// Optional progress to stderr (throttled to every 100 tags)
+		if !quiet && processed%100 == 0 {
+			fmt.Fprintf(os.Stderr, "Progress: %d/%d tags checked\n", processed, total)
+		}
+	}
+
+	return matchCount
+}
+
+// setupSignalHandler sets up a handler to gracefully cancel context on SIGINT/SIGTERM
+func setupSignalHandler(cancel context.CancelFunc) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel()
+	}()
+}
+
+// runPlainMode runs in plain text mode for piped/redirected output
+func runPlainMode(image, digest string, workers int, quiet bool) int {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Setup signal handling for Ctrl+C
+	setupSignalHandler(cancel)
+
+	client := NewRegistryClient(workers)
+	registryURL, repository := parseImageReference(image)
+
+	// Fetch tags with optional progress to stderr
+	if !quiet {
+		fmt.Fprintln(os.Stderr, "Fetching tags...")
+	}
+
+	tags, err := client.fetchTagsList(registryURL, repository)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return 1
+	}
+
+	if len(tags) == 0 {
+		if !quiet {
+			fmt.Fprintln(os.Stderr, "No tags found in repository")
+		}
+		return 1
+	}
+
+	if !quiet {
+		fmt.Fprintf(os.Stderr, "Checking %d tags...\n", len(tags))
+	}
+
+	// Poll results channel and output matches
+	matchCount := checkDigestsPlain(ctx, client, registryURL, repository, tags, digest, quiet)
+
+	if matchCount == 0 {
+		return 1 // Exit code 1 for no matches
+	}
+	return 0
+}
+
+// runTUIMode runs the Bubble Tea terminal UI mode
+func runTUIMode(image, digest string, workers int) {
+	p := tea.NewProgram(initialModel(image, digest, workers))
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	workers := flag.Int("workers", 10, "number of concurrent HTTP requests")
+	quiet := flag.Bool("quiet", false, "suppress progress messages (plain mode only)")
 	versionFlag := flag.Bool("version", false, "print version information")
 	flag.Parse()
 
@@ -612,9 +708,15 @@ func main() {
 		digest = "sha256:" + digest
 	}
 
-	p := tea.NewProgram(initialModel(image, digest, *workers))
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+	// Detect if stdout is a TTY to choose output mode
+	isTTY := isatty.IsTerminal(os.Stdout.Fd())
+
+	if isTTY {
+		// Interactive mode: Use Bubble Tea TUI
+		runTUIMode(image, digest, *workers)
+	} else {
+		// Plain mode: Simple text output for piping/redirecting
+		exitCode := runPlainMode(image, digest, *workers, *quiet)
+		os.Exit(exitCode)
 	}
 }

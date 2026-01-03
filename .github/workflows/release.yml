@@ -57,25 +57,25 @@ jobs:
             echo "Building for $goos/$goarch..."
 
             GOOS=$goos GOARCH=$goarch CGO_ENABLED=0 \
-              go build -o tag-finder${ext} \
+              go build -o oci-tag-finder${ext} \
               -ldflags="-s -w -X main.version=${VERSION}" \
-              tag-finder.go
+              oci-tag-finder.go
 
             # Package the binary
             if [ "$goos" = "windows" ]; then
-              zip tag-finder-${VERSION}-${platform_name}.zip tag-finder${ext}
+              zip oci-tag-finder-${VERSION}-${platform_name}.zip oci-tag-finder${ext}
             else
-              tar czf tag-finder-${VERSION}-${platform_name}.tar.gz tag-finder
+              tar czf oci-tag-finder-${VERSION}-${platform_name}.tar.gz oci-tag-finder
             fi
 
             # Clean up binary
-            rm tag-finder${ext}
+            rm oci-tag-finder${ext}
           done
 
       - name: Generate checksums
         if: steps.tag_version.outputs.new_tag
         run: |
-          sha256sum tag-finder-* > checksums.txt
+          sha256sum oci-tag-finder-* > checksums.txt
 
       - name: Create GitHub Release
         if: steps.tag_version.outputs.new_tag
@@ -85,6 +85,6 @@ jobs:
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           generate_release_notes: true
           files: |
-            tag-finder-*.tar.gz
-            tag-finder-*.zip
+            oci-tag-finder-*.tar.gz
+            oci-tag-finder-*.zip
             checksums.txt

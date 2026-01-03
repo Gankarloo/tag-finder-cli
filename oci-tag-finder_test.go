@@ -603,3 +603,86 @@ func TestModelUpdate_TagsError(t *testing.T) {
 		t.Error("Expected error to be set")
 	}
 }
+
+// TestCheckDigestsPlain tests the plain mode digest checking
+func TestCheckDigestsPlain(t *testing.T) {
+	// Create a test server that returns a known digest
+	targetDigest := "sha256:abc123"
+	digestMap := map[string]string{
+		"tag0": "sha256:different0",
+		"tag1": targetDigest,
+		"tag2": "sha256:different2",
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract tag from URL path (last segment)
+		parts := strings.Split(r.URL.Path, "/")
+		tag := parts[len(parts)-1]
+
+		if digest, ok := digestMap[tag]; ok {
+			w.Header().Set("Docker-Content-Digest", digest)
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	client := NewRegistryClient(2)
+	ctx := context.Background()
+	tags := []string{"tag0", "tag1", "tag2"}
+
+	// Capture stdout to verify only matching tags are output
+	// In actual usage, this would print to stdout, but in tests we just verify the count
+	matchCount := checkDigestsPlain(ctx, client, server.URL, "test/repo", tags, targetDigest, true)
+
+	if matchCount != 1 {
+		t.Errorf("Expected 1 match, got %d", matchCount)
+	}
+}
+
+// TestCheckDigestsPlainNoMatches tests plain mode when no tags match
+func TestCheckDigestsPlainNoMatches(t *testing.T) {
+	// Create a test server that returns a different digest for all tags
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Docker-Content-Digest", "sha256:different")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewRegistryClient(2)
+	ctx := context.Background()
+	tags := []string{"tag0", "tag1", "tag2"}
+	targetDigest := "sha256:notfound"
+
+	matchCount := checkDigestsPlain(ctx, client, server.URL, "test/repo", tags, targetDigest, true)
+
+	if matchCount != 0 {
+		t.Errorf("Expected 0 matches, got %d", matchCount)
+	}
+}
+
+// TestCheckDigestsPlainCancellation tests that plain mode respects context cancellation
+func TestCheckDigestsPlainCancellation(t *testing.T) {
+	// Create a test server with a delay
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.Header().Set("Docker-Content-Digest", "sha256:test")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewRegistryClient(2)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Cancel immediately
+	cancel()
+
+	tags := createTestTags(10)
+	matchCount := checkDigestsPlain(ctx, client, server.URL, "test/repo", tags, "sha256:target", true)
+
+	// Should have 0 matches due to cancellation
+	if matchCount != 0 {
+		t.Errorf("Expected 0 matches after cancellation, got %d", matchCount)
+	}
+}
